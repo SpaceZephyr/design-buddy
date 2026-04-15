@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【项目名称】系统架构图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===== 主题变量（融合 Cursor/Claude/Airtable/Webflow 品牌风格） ===== */
+    :root,
+    [data-theme="dark"] {
+      --bg-page: #141413;
+      --bg-card: rgba(20, 20, 19, 0.5);
+      --bg-card-solid: #1a1a18;
+      --bg-diagram: rgba(20, 20, 19, 0.5);
+      --border-color: rgba(38, 37, 30, 0.2);
+      --text-primary: #faf9f5;
+      --text-secondary: #b0aea5;
+      --text-muted: #6b6a62;
+      --grid-stroke: rgba(38, 37, 30, 0.12);
+      --arrowhead-fill: rgba(38, 37, 30, 0.45);
+      --svg-text: #faf9f5;
+      --svg-text-secondary: #b0aea5;
+      --svg-mask-fill: #1a1a18;
+      --toggle-bg: rgba(20, 20, 19, 0.8);
+      --toggle-border: rgba(38, 37, 30, 0.3);
+      --toggle-icon: #b0aea5;
+      --shadow-card: rgba(0,0,0,0.14) 0px 4px 16px, rgba(38,37,30,0.1) 0px 0px 0px 1px;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f5f4ed;
+      --bg-card: rgba(250, 249, 245, 0.85);
+      --bg-card-solid: #faf9f5;
+      --bg-diagram: rgba(250, 249, 245, 0.6);
+      --border-color: #f0eee6;
+      --text-primary: #141413;
+      --text-secondary: #5e5d59;
+      --text-muted: #87867f;
+      --grid-stroke: #f0eee6;
+      --arrowhead-fill: #87867f;
+      --svg-text: #141413;
+      --svg-text-secondary: #5e5d59;
+      --svg-mask-fill: #faf9f5;
+      --toggle-bg: rgba(255, 255, 255, 0.9);
+      --toggle-border: #e0ddd4;
+      --toggle-icon: #5e5d59;
+      --shadow-card: rgba(0,0,0,0.05) 0px 4px 24px, rgba(38,37,30,0.08) 0px 0px 0px 1px;
+    }
+
+    /* ===== 基础样式 ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-page);
+      min-height: 100vh;
+      padding: 2rem;
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ===== 页眉 ===== */
+    .header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      background: #22d3ee;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-left: 1.75rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* ===== 主题切换按钮 ===== */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+
+    .theme-toggle:hover {
+      border-color: rgba(38, 37, 30, 0.5);
+      transform: scale(1.05);
+    }
+
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--toggle-icon);
+      transition: fill 0.3s ease;
+    }
+
+    .theme-toggle .icon-moon { display: none; }
+    .theme-toggle .icon-sun { display: block; }
+
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: block; }
+    [data-theme="light"] .theme-toggle .icon-sun { display: none; }
+
+    /* ===== 架构图容器 ===== */
+    .diagram-container {
+      background: var(--bg-diagram);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      padding: 1.5rem;
+      overflow-x: auto;
+      transition: background 0.3s ease, border-color 0.3s ease;
+      box-shadow: var(--shadow-card);
+    }
+
+    svg {
+      width: 100%;
+      min-width: 900px;
+      display: block;
+    }
+
+    /* ===== 信息摘要卡片 ===== */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card-dot.orange { background: #fb923c; }
+    .card-dot.purple { background: #c084fc; }
+
+    .card h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card ul {
+      list-style: none;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .card li {
+      margin-bottom: 0.375rem;
+    }
+
+    /* ===== 页脚 ===== */
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="container">
+    <!-- 页眉 -->
+    <div class="header">
+      <div class="header-left">
+        <div class="header-row">
+          <div class="pulse-dot"></div>
+          <h1>【项目名称】系统架构</h1>
+        </div>
+        <p class="subtitle">【副标题描述：系统类型与关键特征说明】</p>
+      </div>
+      <!-- 主题切换按钮 -->
+      <div class="theme-toggle" onclick="toggleTheme()" title="切换深色/浅色主题">
+        <!-- 太阳图标（深色模式下显示，提示可切换到浅色） -->
+        <svg class="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm0 15a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1zm9-6a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1zM5 12a1 1 0 0 1-1 1H3a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1zm14.07-6.36a1 1 0 0 1 0 1.41l-.7.71a1 1 0 0 1-1.42-1.42l.71-.7a1 1 0 0 1 1.41 0zM7.05 17.66a1 1 0 0 1 0 1.41l-.71.71a1 1 0 1 1-1.41-1.42l.7-.71a1 1 0 0 1 1.42 0zm12.02 0a1 1 0 0 1-1.41 0l-.71-.7a1 1 0 0 1 1.42-1.42l.7.71a1 1 0 0 1 0 1.41zM7.05 6.34a1 1 0 0 1-1.41 0l-.71-.7a1 1 0 0 1 1.42-1.42l.7.71a1 1 0 0 1 0 1.41zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/>
+        </svg>
+        <!-- 月亮图标（浅色模式下显示，提示可切换到深色） -->
+        <svg class="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12.1 22c-5.5 0-10-4.5-10-10 0-4.8 3.4-8.8 8.1-9.8.4-.1.8.1 1 .5.2.4.1.8-.3 1.1-1.6 1.2-2.5 3.1-2.5 5.2 0 3.6 2.9 6.5 6.5 6.5 1.5 0 2.9-.5 4-1.4.3-.3.7-.3 1.1-.1.3.2.5.6.4 1-1.1 4.7-5.1 8-9.8 8h-.5z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 主架构图 -->
+    <div class="diagram-container">
+      <svg class="diagram-svg" viewBox="0 0 1000 680">
+        <!-- 定义区 -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="arrowhead-color" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- 背景网格 -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- =================================================================
+             组件示例 - 复制并自定义这些模式
+             ================================================================= -->
+
+        <!-- 外部/通用组件：用户 -->
+        <rect x="30" y="280" width="110" height="50" rx="6" class="mask-bg"/>
+        <rect x="30" y="280" width="110" height="50" rx="8" fill="rgba(38, 37, 30, 0.35)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="85" y="300" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">用户</text>
+        <text x="85" y="316" class="text-secondary" font-size="9" text-anchor="middle">浏览器 / 移动端</text>
+
+        <!-- 安全组件：认证服务 -->
+        <rect x="30" y="80" width="120" height="60" rx="6" class="mask-bg"/>
+        <rect x="30" y="80" width="120" height="60" rx="8" fill="rgba(130, 25, 50, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="90" y="105" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">认证服务</text>
+        <text x="90" y="121" class="text-secondary" font-size="9" text-anchor="middle">OAuth 2.0 / JWT</text>
+
+        <!-- 区域/云边界 -->
+        <rect x="170" y="40" width="810" height="620" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="182" y="58" fill="#fbbf24" font-size="10" font-weight="600">云区域：华北 2（北京）</text>
+
+        <!-- 云服务：CDN -->
+        <rect x="200" y="280" width="120" height="50" rx="6" class="mask-bg"/>
+        <rect x="200" y="280" width="120" height="50" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="260" y="300" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">CDN 加速</text>
+        <text x="260" y="316" class="text-secondary" font-size="9" text-anchor="middle">CloudFront</text>
+
+        <!-- 云服务：对象存储（多行示例） -->
+        <rect x="200" y="380" width="120" height="100" rx="8" class="mask-bg"/>
+        <rect x="200" y="380" width="120" height="100" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="260" y="400" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">对象存储</text>
+        <text x="260" y="420" class="text-secondary" font-size="8" text-anchor="middle">- bucket-one</text>
+        <text x="260" y="434" class="text-secondary" font-size="8" text-anchor="middle">- bucket-two</text>
+        <text x="260" y="448" class="text-secondary" font-size="8" text-anchor="middle">- bucket-three</text>
+        <text x="260" y="466" fill="#fbbf24" font-size="7" text-anchor="middle">OAI 保护</text>
+
+        <!-- 安全组（虚线边界） -->
+        <rect x="360" y="265" width="130" height="80" rx="8" fill="transparent" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="368" y="279" fill="#fb7185" font-size="8">安全组 :port</text>
+
+        <!-- 安全组内的组件 -->
+        <rect x="370" y="285" width="110" height="50" rx="6" class="mask-bg"/>
+        <rect x="370" y="285" width="110" height="50" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="425" y="305" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">负载均衡</text>
+        <text x="425" y="321" class="text-secondary" font-size="9" text-anchor="middle">HTTPS :443</text>
+
+        <!-- 后端组件 -->
+        <rect x="530" y="280" width="120" height="50" rx="6" class="mask-bg"/>
+        <rect x="530" y="280" width="120" height="50" rx="8" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="590" y="300" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">API 服务</text>
+        <text x="590" y="316" class="text-secondary" font-size="9" text-anchor="middle">FastAPI :8000</text>
+
+        <!-- 数据库组件 -->
+        <rect x="710" y="280" width="130" height="50" rx="6" class="mask-bg"/>
+        <rect x="710" y="280" width="130" height="50" rx="8" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="775" y="300" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">数据库</text>
+        <text x="775" y="316" class="text-secondary" font-size="9" text-anchor="middle">PostgreSQL</text>
+
+        <!-- 前端组件 -->
+        <rect x="200" y="520" width="210" height="110" rx="8" class="mask-bg"/>
+        <rect x="200" y="520" width="210" height="110" rx="8" fill="rgba(20, 50, 62, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="305" y="545" class="text-primary" font-size="12" font-weight="600" text-anchor="middle">前端应用</text>
+        <text x="305" y="565" class="text-secondary" font-size="9" text-anchor="middle">React + TypeScript</text>
+        <text x="305" y="580" class="text-secondary" font-size="9" text-anchor="middle">状态管理 / 路由</text>
+        <text x="305" y="595" class="text-secondary" font-size="9" text-anchor="middle">组件库 / 样式系统</text>
+        <text x="305" y="615" fill="#22d3ee" font-size="8" text-anchor="middle">app.example.com</text>
+
+        <!-- 消息队列示例 -->
+        <rect x="530" y="370" width="160" height="22" rx="4" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="610" y="385" fill="#fb923c" font-size="8" text-anchor="middle">消息队列 Kafka</text>
+
+        <!-- =================================================================
+             箭头示例
+             ================================================================= -->
+
+        <!-- 带标签的标准箭头 -->
+        <line x1="140" y1="305" x2="198" y2="305" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="169" y="299" class="text-secondary" font-size="9" text-anchor="middle">HTTPS</text>
+
+        <!-- 简单箭头（无标签） -->
+        <line x1="320" y1="305" x2="368" y2="305" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <!-- 垂直箭头 -->
+        <line x1="260" y1="330" x2="260" y2="378" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="278" y="358" class="text-secondary" font-size="9">OAI</text>
+
+        <!-- 标准水平箭头 -->
+        <line x1="480" y1="305" x2="528" y2="305" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="650" y1="305" x2="708" y2="305" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="680" y="299" class="text-secondary" font-size="9">TLS</text>
+
+        <!-- 垂直箭头到消息队列 -->
+        <line x1="590" y1="330" x2="590" y2="368" stroke="#fb923c" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <!-- 认证流的曲线路径 -->
+        <path d="M 90 140 L 90 200 Q 90 220 110 220 L 200 220 Q 220 220 220 240 L 220 278" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5"/>
+        <text x="155" y="212" fill="#fb7185" font-size="8">JWT + PKCE</text>
+
+        <!-- =================================================================
+             图例
+             ================================================================= -->
+        <text x="710" y="70" class="text-primary" font-size="10" font-weight="600">图例</text>
+
+        <rect x="710" y="82" width="16" height="10" rx="2" fill="rgba(20, 50, 62, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="732" y="90" class="text-secondary" font-size="8">前端</text>
+
+        <rect x="710" y="98" width="16" height="10" rx="2" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="732" y="106" class="text-secondary" font-size="8">后端服务</text>
+
+        <rect x="710" y="114" width="16" height="10" rx="2" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="732" y="122" class="text-secondary" font-size="8">云服务</text>
+
+        <rect x="710" y="130" width="16" height="10" rx="2" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="732" y="138" class="text-secondary" font-size="8">数据库</text>
+
+        <rect x="710" y="146" width="16" height="10" rx="2" fill="rgba(130, 25, 50, 0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="732" y="154" class="text-secondary" font-size="8">安全组件</text>
+
+        <rect x="710" y="162" width="16" height="10" rx="2" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="732" y="170" class="text-secondary" font-size="8">消息队列</text>
+
+        <line x1="710" y1="184" x2="726" y2="184" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="732" y="187" class="text-secondary" font-size="8">认证流程</text>
+
+        <rect x="710" y="194" width="16" height="10" rx="2" fill="transparent" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="732" y="202" class="text-secondary" font-size="8">安全组边界</text>
+      </svg>
+    </div>
+
+    <!-- 信息摘要卡片 -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>技术栈概要</h3>
+        </div>
+        <ul>
+          <li>- 前端：React + TypeScript</li>
+          <li>- 后端：FastAPI (Python)</li>
+          <li>- 数据库：PostgreSQL</li>
+          <li>- 云平台：AWS</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>关键设计决策</h3>
+        </div>
+        <ul>
+          <li>- CDN 加速静态资源分发</li>
+          <li>- 负载均衡实现高可用</li>
+          <li>- 消息队列解耦异步任务</li>
+          <li>- 安全组隔离内部服务</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>安全与运维</h3>
+        </div>
+        <ul>
+          <li>- OAuth 2.0 + JWT 认证</li>
+          <li>- TLS 加密传输</li>
+          <li>- OAI 保护 S3 访问</li>
+          <li>- 安全组网络隔离</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <p class="footer">
+      【项目名称】系统架构图 - 由架构图生成技能自动生成
+    </p>
+  </div>
+
+  <style>
+    /* ===== SVG 主题适配（融合品牌风格） ===== */
+    [data-theme="dark"] .text-primary { fill: #faf9f5; }
+    [data-theme="dark"] .text-secondary { fill: #b0aea5; }
+    [data-theme="dark"] .mask-bg { fill: #1a1a18; }
+    [data-theme="dark"] .grid-line { stroke: rgba(38, 37, 30, 0.12); }
+    [data-theme="dark"] .arrowhead-color { fill: rgba(38, 37, 30, 0.45); }
+
+    [data-theme="light"] .text-primary { fill: #141413; }
+    [data-theme="light"] .text-secondary { fill: #5e5d59; }
+    [data-theme="light"] .mask-bg { fill: #faf9f5; }
+    [data-theme="light"] .grid-line { stroke: #f0eee6; }
+    [data-theme="light"] .arrowhead-color { fill: #87867f; }
+  </style>
+
+  <script>
+    // 主题切换
+    function toggleTheme() {
+      var body = document.body;
+      var current = body.getAttribute('data-theme') || 'dark';
+      var next = current === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', next);
+      try { localStorage.setItem('arch-diagram-theme', next); } catch(e) {}
+    }
+    // 初始化：读取用户上次选择
+    (function() {
+      try {
+        var saved = localStorage.getItem('arch-diagram-theme');
+        if (saved) document.body.setAttribute('data-theme', saved);
+      } catch(e) {}
+    })();
+  </script>
+</body>
+</html>

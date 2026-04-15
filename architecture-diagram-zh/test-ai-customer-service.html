@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 智能客服平台系统架构图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===== 主题变量（融合 Cursor/Claude/Airtable/Webflow 品牌风格） ===== */
+    :root,
+    [data-theme="dark"] {
+      --bg-page: #141413;
+      --bg-card: rgba(20, 20, 19, 0.5);
+      --bg-card-solid: #1a1a18;
+      --bg-diagram: rgba(20, 20, 19, 0.5);
+      --border-color: rgba(38, 37, 30, 0.2);
+      --text-primary: #faf9f5;
+      --text-secondary: #b0aea5;
+      --text-muted: #6b6a62;
+      --toggle-bg: rgba(20, 20, 19, 0.8);
+      --toggle-border: rgba(38, 37, 30, 0.3);
+      --toggle-icon: #b0aea5;
+      --shadow-card: rgba(0,0,0,0.14) 0px 4px 16px, rgba(38,37,30,0.1) 0px 0px 0px 1px;
+    }
+    [data-theme="light"] {
+      --bg-page: #f5f4ed;
+      --bg-card: rgba(250, 249, 245, 0.85);
+      --bg-card-solid: #faf9f5;
+      --bg-diagram: rgba(250, 249, 245, 0.6);
+      --border-color: #f0eee6;
+      --text-primary: #141413;
+      --text-secondary: #5e5d59;
+      --text-muted: #87867f;
+      --toggle-bg: rgba(255, 255, 255, 0.9);
+      --toggle-border: #e0ddd4;
+      --toggle-icon: #5e5d59;
+      --shadow-card: rgba(0,0,0,0.05) 0px 4px 24px, rgba(38,37,30,0.08) 0px 0px 0px 1px;
+    }
+    /* ===== 基础样式 ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-page);
+      min-height: 100vh;
+      padding: 2rem;
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    /* ===== 页眉 ===== */
+    .header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .header-left { flex: 1; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); line-height: 1.6; }
+    .subtitle { color: var(--text-secondary); font-size: 0.875rem; margin-left: 1.75rem; letter-spacing: 0.04em; }
+    /* ===== 主题切换按钮 ===== */
+    .theme-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 8px;
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      cursor: pointer; transition: all 0.3s ease; flex-shrink: 0; margin-left: 1rem;
+    }
+    .theme-toggle:hover { border-color: rgba(38, 37, 30, 0.5); transform: scale(1.05); }
+    .theme-toggle svg { width: 20px; height: 20px; fill: var(--toggle-icon); transition: fill 0.3s ease; }
+    .theme-toggle .icon-moon { display: none; }
+    .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: block; }
+    [data-theme="light"] .theme-toggle .icon-sun { display: none; }
+    /* ===== 架构图容器 ===== */
+    .diagram-container {
+      background: var(--bg-diagram); border-radius: 12px;
+      border: 1px solid var(--border-color); padding: 1.5rem; overflow-x: auto;
+      transition: background 0.3s ease, border-color 0.3s ease;
+      box-shadow: var(--shadow-card);
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+    /* ===== 信息摘要卡片 ===== */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .card {
+      background: var(--bg-card); border-radius: 12px;
+      border: 1px solid var(--border-color); padding: 1.25rem;
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: var(--shadow-card);
+    }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card-dot.orange { background: #fb923c; }
+    .card-dot.purple { background: #c084fc; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.75rem; }
+    /* ===== SVG 主题适配（融合品牌风格） ===== */
+    [data-theme="dark"] .text-primary { fill: #faf9f5; }
+    [data-theme="dark"] .text-secondary { fill: #b0aea5; }
+    [data-theme="dark"] .mask-bg { fill: #1a1a18; }
+    [data-theme="dark"] .grid-line { stroke: rgba(38, 37, 30, 0.12); }
+    [data-theme="dark"] .arrowhead-color { fill: rgba(38, 37, 30, 0.45); }
+    [data-theme="light"] .text-primary { fill: #141413; }
+    [data-theme="light"] .text-secondary { fill: #5e5d59; }
+    [data-theme="light"] .mask-bg { fill: #faf9f5; }
+    [data-theme="light"] .grid-line { stroke: #f0eee6; }
+    [data-theme="light"] .arrowhead-color { fill: #87867f; }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="container">
+    <!-- 页眉 -->
+    <div class="header">
+      <div class="header-left">
+        <div class="header-row">
+          <div class="pulse-dot"></div>
+          <h1>AI 智能客服平台 系统架构</h1>
+        </div>
+        <p class="subtitle">基于大语言模型的微服务架构 - 支持多渠道接入、智能对话、知识库检索</p>
+      </div>
+      <div class="theme-toggle" onclick="toggleTheme()" title="切换深色/浅色主题">
+        <svg class="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm0 15a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1zm9-6a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1zM5 12a1 1 0 0 1-1 1H3a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1zm14.07-6.36a1 1 0 0 1 0 1.41l-.7.71a1 1 0 0 1-1.42-1.42l.71-.7a1 1 0 0 1 1.41 0zM7.05 17.66a1 1 0 0 1 0 1.41l-.71.71a1 1 0 1 1-1.41-1.42l.7-.71a1 1 0 0 1 1.42 0zm12.02 0a1 1 0 0 1-1.41 0l-.71-.7a1 1 0 0 1 1.42-1.42l.7.71a1 1 0 0 1 0 1.41zM7.05 6.34a1 1 0 0 1-1.41 0l-.71-.7a1 1 0 0 1 1.42-1.42l.7.71a1 1 0 0 1 0 1.41zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.1 22c-5.5 0-10-4.5-10-10 0-4.8 3.4-8.8 8.1-9.8.4-.1.8.1 1 .5.2.4.1.8-.3 1.1-1.6 1.2-2.5 3.1-2.5 5.2 0 3.6 2.9 6.5 6.5 6.5 1.5 0 2.9-.5 4-1.4.3-.3.7-.3 1.1-.1.3.2.5.6.4 1-1.1 4.7-5.1 8-9.8 8h-.5z"/></svg>
+      </div>
+    </div>
+
+    <!-- 主架构图 -->
+    <div class="diagram-container">
+      <svg class="diagram-svg" viewBox="0 0 1100 820">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="arrowhead-color" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- 连接箭头 -->
+        <line x1="130" y1="115" x2="218" y2="115" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="174" y="109" class="text-secondary" font-size="8" text-anchor="middle">HTTPS</text>
+        <path d="M 280 85 L 280 55 Q 280 40 295 40 L 380 40 Q 395 40 395 55 L 395 68" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5"/>
+        <text x="340" y="35" fill="#fb7185" font-size="7">Token 验证</text>
+        <line x1="340" y1="115" x2="438" y2="115" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="390" y="109" class="text-secondary" font-size="8" text-anchor="middle">gRPC</text>
+        <line x1="280" y1="145" x2="280" y2="243" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="296" y="200" class="text-secondary" font-size="8">REST</text>
+        <line x1="570" y1="115" x2="658" y2="115" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="614" y="109" class="text-secondary" font-size="8" text-anchor="middle">推理请求</text>
+        <line x1="510" y1="145" x2="510" y2="183" stroke="#fb923c" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="510" y1="210" x2="510" y2="243" stroke="#fb923c" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="790" y1="100" x2="878" y2="100" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="790" y1="130" x2="878" y2="175" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="840" y="145" class="text-secondary" font-size="7">RAG</text>
+        <line x1="570" y1="135" x2="878" y2="260" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="720" y="195" fill="#a78bfa" font-size="7">会话缓存</text>
+        <line x1="370" y1="275" x2="598" y2="275" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="484" y="269" class="text-secondary" font-size="8" text-anchor="middle">SQL</text>
+        <path d="M 510 145 L 510 160 Q 510 175 530 175 L 530 320 Q 530 340 550 340 L 598 340" fill="none" stroke="#a78bfa" stroke-width="1" marker-end="url(#arrowhead)"/>
+        <text x="545" y="310" class="text-secondary" font-size="7">存储对话</text>
+
+        <!-- 第一层：客户端 -->
+        <rect x="20" y="70" width="110" height="90" rx="8" class="mask-bg"/>
+        <rect x="20" y="70" width="110" height="90" rx="8" fill="rgba(20, 50, 62, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="75" y="95" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">用户终端</text>
+        <text x="75" y="112" class="text-secondary" font-size="8" text-anchor="middle">- Web 浏览器</text>
+        <text x="75" y="126" class="text-secondary" font-size="8" text-anchor="middle">- 移动 APP</text>
+        <text x="75" y="140" class="text-secondary" font-size="8" text-anchor="middle">- 微信/企微</text>
+        <text x="75" y="152" fill="#22d3ee" font-size="7" text-anchor="middle">多渠道接入</text>
+
+        <!-- 第二层：网关 & 认证 -->
+        <rect x="330" y="70" width="130" height="50" rx="6" class="mask-bg"/>
+        <rect x="330" y="70" width="130" height="50" rx="8" fill="rgba(130, 25, 50, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="395" y="90" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">认证服务</text>
+        <text x="395" y="106" class="text-secondary" font-size="9" text-anchor="middle">OAuth 2.0 / JWT</text>
+
+        <rect x="220" y="85" width="120" height="60" rx="6" class="mask-bg"/>
+        <rect x="220" y="85" width="120" height="60" rx="8" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="280" y="108" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">API 网关</text>
+        <text x="280" y="124" class="text-secondary" font-size="9" text-anchor="middle">Kong :8000</text>
+        <text x="280" y="137" fill="#34d399" font-size="7" text-anchor="middle">限流 / 路由 / 熔断</text>
+
+        <!-- 第三层：核心微服务 -->
+        <rect x="440" y="85" width="130" height="60" rx="6" class="mask-bg"/>
+        <rect x="440" y="85" width="130" height="60" rx="8" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="505" y="108" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">对话服务</text>
+        <text x="505" y="124" class="text-secondary" font-size="9" text-anchor="middle">Python / FastAPI</text>
+        <text x="505" y="137" fill="#34d399" font-size="7" text-anchor="middle">WebSocket :9000</text>
+
+        <rect x="660" y="85" width="130" height="60" rx="6" class="mask-bg"/>
+        <rect x="660" y="85" width="130" height="60" rx="8" fill="rgba(80, 30, 120, 0.4)" stroke="#c084fc" stroke-width="1.5"/>
+        <text x="725" y="108" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">AI 编排服务</text>
+        <text x="725" y="124" class="text-secondary" font-size="9" text-anchor="middle">LangChain</text>
+        <text x="725" y="137" fill="#c084fc" font-size="7" text-anchor="middle">Prompt / RAG / Agent</text>
+
+        <!-- AI 服务层 -->
+        <rect x="880" y="75" width="150" height="55" rx="6" class="mask-bg"/>
+        <rect x="880" y="75" width="150" height="55" rx="8" fill="rgba(80, 30, 120, 0.4)" stroke="#c084fc" stroke-width="1.5"/>
+        <text x="955" y="95" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">大语言模型</text>
+        <text x="955" y="111" class="text-secondary" font-size="9" text-anchor="middle">GPT-4o / Claude 3.5</text>
+        <text x="955" y="123" fill="#c084fc" font-size="7" text-anchor="middle">流式输出 / Function Call</text>
+
+        <rect x="880" y="155" width="150" height="50" rx="6" class="mask-bg"/>
+        <rect x="880" y="155" width="150" height="50" rx="8" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="955" y="175" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">向量数据库</text>
+        <text x="955" y="191" class="text-secondary" font-size="9" text-anchor="middle">Milvus</text>
+
+        <rect x="880" y="235" width="150" height="50" rx="6" class="mask-bg"/>
+        <rect x="880" y="235" width="150" height="50" rx="8" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="955" y="255" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">缓存服务</text>
+        <text x="955" y="271" class="text-secondary" font-size="9" text-anchor="middle">Redis Cluster</text>
+
+        <!-- 消息队列层 -->
+        <rect x="420" y="185" width="180" height="22" rx="4" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="510" y="200" fill="#fb923c" font-size="8" text-anchor="middle">消息队列 Kafka</text>
+
+        <!-- 第四层：数据服务 -->
+        <rect x="200" y="245" width="170" height="60" rx="6" class="mask-bg"/>
+        <rect x="200" y="245" width="170" height="60" rx="8" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="285" y="268" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">用户管理服务</text>
+        <text x="285" y="284" class="text-secondary" font-size="9" text-anchor="middle">Go / Gin :8080</text>
+        <text x="285" y="297" fill="#34d399" font-size="7" text-anchor="middle">注册 / 权限 / 配置</text>
+
+        <rect x="440" y="245" width="140" height="60" rx="6" class="mask-bg"/>
+        <rect x="440" y="245" width="140" height="60" rx="8" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="510" y="268" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">数据分析服务</text>
+        <text x="510" y="284" class="text-secondary" font-size="9" text-anchor="middle">Spark / Flink</text>
+        <text x="510" y="297" fill="#34d399" font-size="7" text-anchor="middle">对话质检 / 报表</text>
+
+        <!-- 第五层：数据存储 -->
+        <rect x="600" y="250" width="140" height="50" rx="6" class="mask-bg"/>
+        <rect x="600" y="250" width="140" height="50" rx="8" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="670" y="270" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">关系数据库</text>
+        <text x="670" y="286" class="text-secondary" font-size="9" text-anchor="middle">PostgreSQL 16</text>
+
+        <rect x="600" y="315" width="140" height="50" rx="6" class="mask-bg"/>
+        <rect x="600" y="315" width="140" height="50" rx="8" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="670" y="335" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">对话记录库</text>
+        <text x="670" y="351" class="text-secondary" font-size="9" text-anchor="middle">MongoDB</text>
+
+        <!-- 第六层：基础设施 -->
+        <rect x="170" y="395" width="660" height="180" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="182" y="413" fill="#fbbf24" font-size="10" font-weight="600">Kubernetes 集群 (阿里云 ACK)</text>
+
+        <rect x="200" y="430" width="150" height="55" rx="6" class="mask-bg"/>
+        <rect x="200" y="430" width="150" height="55" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="275" y="450" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">监控告警</text>
+        <text x="275" y="466" class="text-secondary" font-size="9" text-anchor="middle">Prometheus + Grafana</text>
+        <text x="275" y="479" fill="#fbbf24" font-size="7" text-anchor="middle">指标采集 / 告警通知</text>
+
+        <rect x="380" y="430" width="150" height="55" rx="6" class="mask-bg"/>
+        <rect x="380" y="430" width="150" height="55" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="455" y="450" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">日志服务</text>
+        <text x="455" y="466" class="text-secondary" font-size="9" text-anchor="middle">ELK Stack</text>
+        <text x="455" y="479" fill="#fbbf24" font-size="7" text-anchor="middle">日志采集 / 全文检索</text>
+
+        <rect x="560" y="430" width="150" height="55" rx="6" class="mask-bg"/>
+        <rect x="560" y="430" width="150" height="55" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="635" y="450" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">配置中心</text>
+        <text x="635" y="466" class="text-secondary" font-size="9" text-anchor="middle">Nacos / Apollo</text>
+        <text x="635" y="479" fill="#fbbf24" font-size="7" text-anchor="middle">动态配置 / 服务发现</text>
+
+        <rect x="200" y="505" width="150" height="55" rx="6" class="mask-bg"/>
+        <rect x="200" y="505" width="150" height="55" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="275" y="525" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">CI/CD 流水线</text>
+        <text x="275" y="541" class="text-secondary" font-size="9" text-anchor="middle">GitLab CI + ArgoCD</text>
+        <text x="275" y="554" fill="#fbbf24" font-size="7" text-anchor="middle">自动构建 / 滚动发布</text>
+
+        <rect x="560" y="505" width="250" height="55" rx="8" fill="transparent" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="568" y="519" fill="#fb7185" font-size="8">安全组 :internal</text>
+
+        <rect x="570" y="520" width="110" height="35" rx="6" class="mask-bg"/>
+        <rect x="570" y="520" width="110" height="35" rx="8" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="625" y="535" class="text-primary" font-size="10" font-weight="600" text-anchor="middle">镜像仓库</text>
+        <text x="625" y="548" class="text-secondary" font-size="8" text-anchor="middle">Harbor</text>
+
+        <rect x="695" y="520" width="110" height="35" rx="6" class="mask-bg"/>
+        <rect x="695" y="520" width="110" height="35" rx="8" fill="rgba(130, 25, 50, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="750" y="535" class="text-primary" font-size="10" font-weight="600" text-anchor="middle">密钥管理</text>
+        <text x="750" y="548" class="text-secondary" font-size="8" text-anchor="middle">Vault</text>
+
+        <!-- 外部服务 -->
+        <rect x="860" y="430" width="140" height="55" rx="6" class="mask-bg"/>
+        <rect x="860" y="430" width="140" height="55" rx="8" fill="rgba(38, 37, 30, 0.35)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="930" y="450" class="text-primary" font-size="11" font-weight="600" text-anchor="middle">通知服务</text>
+        <text x="930" y="466" class="text-secondary" font-size="9" text-anchor="middle">短信 / 邮件 / 推送</text>
+        <text x="930" y="479" class="text-secondary" font-size="8" text-anchor="middle">阿里云 SMS / SendGrid</text>
+        <path d="M 570 130 L 830 130 Q 850 130 850 150 L 850 430 Q 850 445 860 445" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrowhead)"/>
+        <text x="855" y="290" class="text-secondary" font-size="7">通知触发</text>
+
+        <!-- 图例 -->
+        <text x="30" y="620" class="text-primary" font-size="10" font-weight="600">图例</text>
+        <rect x="30" y="632" width="16" height="10" rx="2" fill="rgba(20, 50, 62, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="52" y="640" class="text-secondary" font-size="8">前端 / 客户端</text>
+        <rect x="140" y="632" width="16" height="10" rx="2" fill="rgba(18, 72, 55, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="162" y="640" class="text-secondary" font-size="8">后端微服务</text>
+        <rect x="260" y="632" width="16" height="10" rx="2" fill="rgba(80, 30, 120, 0.4)" stroke="#c084fc" stroke-width="1"/>
+        <text x="282" y="640" class="text-secondary" font-size="8">AI 服务</text>
+        <rect x="360" y="632" width="16" height="10" rx="2" fill="rgba(72, 30, 100, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="382" y="640" class="text-secondary" font-size="8">数据库 / 存储</text>
+        <rect x="490" y="632" width="16" height="10" rx="2" fill="rgba(110, 50, 18, 0.35)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="512" y="640" class="text-secondary" font-size="8">基础设施</text>
+        <rect x="600" y="632" width="16" height="10" rx="2" fill="rgba(130, 25, 50, 0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="622" y="640" class="text-secondary" font-size="8">安全组件</text>
+        <rect x="710" y="632" width="16" height="10" rx="2" fill="rgba(38, 37, 30, 0.35)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="732" y="640" class="text-secondary" font-size="8">外部服务</text>
+        <rect x="820" y="632" width="16" height="10" rx="2" fill="rgba(251, 146, 60, 0.3)" stroke="#fb923c" stroke-width="1"/>
+        <text x="842" y="640" class="text-secondary" font-size="8">消息队列</text>
+        <line x1="30" y1="660" x2="46" y2="660" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="52" y="663" class="text-secondary" font-size="8">认证 / 安全流程</text>
+        <rect x="170" y="654" width="16" height="10" rx="2" fill="transparent" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="192" y="663" class="text-secondary" font-size="8">安全组边界</text>
+        <rect x="290" y="654" width="16" height="10" rx="2" fill="transparent" stroke="#fbbf24" stroke-width="1" stroke-dasharray="5,3"/>
+        <text x="312" y="663" class="text-secondary" font-size="8">集群 / 区域边界</text>
+      </svg>
+    </div>
+
+    <!-- 信息摘要卡片 -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot purple"></div>
+          <h3>技术栈概要</h3>
+        </div>
+        <ul>
+          <li>- 前端：React + TypeScript + WebSocket</li>
+          <li>- 后端：Python FastAPI + Go Gin 微服务</li>
+          <li>- AI：LangChain + GPT-4o / Claude 3.5</li>
+          <li>- 数据库：PostgreSQL + MongoDB + Milvus</li>
+          <li>- 缓存：Redis Cluster</li>
+          <li>- 消息队列：Kafka</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>关键设计决策</h3>
+        </div>
+        <ul>
+          <li>- API 网关统一入口，限流熔断</li>
+          <li>- AI 编排层支持 RAG 检索增强生成</li>
+          <li>- 消息队列解耦对话与数据分析</li>
+          <li>- WebSocket 实现流式对话输出</li>
+          <li>- 多渠道接入（Web / APP / 企微）</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>安全与运维</h3>
+        </div>
+        <ul>
+          <li>- OAuth 2.0 + JWT 身份认证</li>
+          <li>- Vault 密钥管理，安全组网络隔离</li>
+          <li>- Prometheus + Grafana 全链路监控</li>
+          <li>- ELK 日志采集与全文检索</li>
+          <li>- GitLab CI + ArgoCD GitOps 部署</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="footer">
+      AI 智能客服平台 系统架构图 - 由架构图生成技能自动生成
+    </p>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      var body = document.body;
+      var current = body.getAttribute('data-theme') || 'dark';
+      var next = current === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', next);
+      try { localStorage.setItem('arch-diagram-theme', next); } catch(e) {}
+    }
+    (function() {
+      try {
+        var saved = localStorage.getItem('arch-diagram-theme');
+        if (saved) document.body.setAttribute('data-theme', saved);
+      } catch(e) {}
+    })();
+  </script>
+</body>
+</html>
