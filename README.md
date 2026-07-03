@@ -95,13 +95,13 @@ Design Buddy 基于开放的 Agent Skills 协议，可在任何 skills-compatibl
 打开你正在用的 agent（Claude Code、Codex、Cursor、OpenClaw、Hermes、CodeBuddy、Workbuddy、Gemini CLI、OpenCode 等），告诉它：
 
 ```text
-帮我安装这个 skill：https://github.com/zephyrwang6/design-buddy
+帮我安装这个 skill：https://github.com/SpaceZephyr/design-buddy
 ```
 
 或者用通用 CLI 安装器（vercel-labs/skills，支持多 runtime）：
 
 ```bash
-npx skills add zephyrwang6/design-buddy
+npx skills add SpaceZephyr/design-buddy
 ```
 
 它会自动识别你当前的 runtime 并把 skill 放到正确目录。需要指定时可加 runtime 参数，例如 `-a codex` / `-a claude-code` / `-a cursor`。
@@ -111,7 +111,7 @@ npx skills add zephyrwang6/design-buddy
 克隆仓库后，把需要的 skill 目录复制到你的 runtime skills 目录：
 
 ```bash
-git clone https://github.com/zephyrwang6/design-buddy.git
+git clone https://github.com/SpaceZephyr/design-buddy.git
 ```
 
 仓库结构：
@@ -120,11 +120,6 @@ git clone https://github.com/zephyrwang6/design-buddy.git
 algorithmic-art/
 architecture-diagram-zh/
 article-batch-illustration/
-baoyu-article-illustrator/
-baoyu-cover-image/
-baoyu-image-gen/
-baoyu-infographic/
-baoyu-xhs-images/
 canvas-design/
 chart-craft/
 chart-craft-plus/
@@ -178,13 +173,8 @@ text-logic-diagram/
 
 | Skill | 解决的问题 | 输出 |
 | --- | --- | --- |
-| `baoyu-cover-image` | 文章封面、课程封面、社交媒体头图 | 图片 |
-| `baoyu-image-gen` | OpenAI / Google / DashScope 多模型图片生成 | 图片 |
 | `gemini-image` | Gemini 文生图、图生图、多图参考生成 | 图片 |
-| `baoyu-infographic` | 信息图、框架图、可视化摘要 | 图片 / HTML |
-| `baoyu-xhs-images` | 小红书多页图、种草图、知识卡片 | 系列图片 |
 | `article-batch-illustration` | Markdown 文章批量配图并插入文档 | 图片 + 更新后的文章 |
-| `baoyu-article-illustrator` | 按 Type x Style 体系给文章找配图点 | 图片建议 / 图片 |
 | `markdown-to-image` | Markdown 转社交媒体分享海报 | PNG |
 | `logo-batch-generator` | 品牌 Logo 批量生成和方向探索 | Logo 图片 |
 | `storyboard-generator` | 故事润色、分镜拆解、故事板生成 | 分镜表 + 图片 |
