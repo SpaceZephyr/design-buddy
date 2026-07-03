@@ -1,0 +1,6 @@
+.labnana.env
+**/.labnana.env
+.env
+**/.env
+__pycache__/
+*.pyc
