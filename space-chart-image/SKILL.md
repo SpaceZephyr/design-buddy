@@ -1,9 +1,9 @@
 ---
-name: chart-image
+name: space-chart-image
 description: |
   使用 AI 图片生成技术绘制美观的图表。支持 10 种图表类型：流程图、架构图、ER 图、商业模式画布、用户旅程图、思维导图、竞品分析图、SWOT 分析、产品路线图、组织架构图。6 种内置视觉风格。
   触发词："画个 XX 图"、"生成商业模式画布"、"做个架构图"、"画 ER 图"、"帮我画个流程图"、"生成用户旅程图"、"做个思维导图"、"竞品分析图"、"SWOT 分析图"、"产品路线图"、"组织架构图"、"帮我可视化图表"。
-  与 chart-craft 不同：本 Skill 使用 GPT-image-2 模型直接生成图片，不生成 HTML。
+  与 space-chart-html 不同：本 Skill 使用 GPT-image-2 模型直接生成图片，不生成 HTML。
 ---
 
 # Chart Image：AI 图表绘制器
@@ -198,7 +198,7 @@ options:
 确认提示词后，调用脚本生成图片：
 
 ```bash
-python3 /Users/ugreen/.claude/skills/chart-image/scripts/generate_chart.py \
+python3 /Users/ugreen/.claude/skills/space-chart-image/scripts/generate_chart.py \
   --prompt "提示词内容" \
   --output "/Users/ugreen/Documents/obsidian/09image/MMDD-图表名.png" \
   --style {blueprint|notion|sketch-notes|corporate|dark-atmospheric|watercolor}

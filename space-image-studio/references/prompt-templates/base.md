@@ -1,6 +1,6 @@
 # 提示词组装模板
 
-每张图的 prompt 由以下 4 块拼装而成。最终用英文+中文混合（中文用于图内文字、英文用于风格描述），写入 `/tmp/image-studio-prompt.txt`。
+每张图的 prompt 由以下 4 块拼装而成。最终用英文+中文混合（中文用于图内文字、英文用于风格描述），写入 `/tmp/space-image-studio-prompt.txt`。
 
 ```
 Create a {TYPE_NAME} image with aspect ratio {ASPECT}.
@@ -72,7 +72,7 @@ prompt = f"""Create a {type_name} image with aspect ratio {aspect}.
 {universal_constraints}
 """
 
-Path('/tmp/image-studio-prompt.txt').write_text(prompt)
+Path('/tmp/space-image-studio-prompt.txt').write_text(prompt)
 ```
 
 ## 注意

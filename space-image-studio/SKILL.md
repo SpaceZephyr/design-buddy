@@ -1,14 +1,14 @@
 ---
-name: image-studio
+name: space-image-studio
 description: |
   全能图片工作室。一个 Skill 搞定四类高频图片：小红书封面（3:4）、PPT 配图（16:9）、各类图表（流程图/架构图/热力图等 12+ 种）、文章逻辑图（16:9）。
   内置 12 种视觉风格 + 自动风格推荐，覆盖中文场景。
   流程：输入内容 → 选类型 → 补全信息 → 选风格 → 提示词（自动 / 审核）→ 出图。
   调用 LabNana 的 GPT-image-2 模型，输出 PNG。
-  触发词："做封面"、"小红书封面"、"做张配图"、"PPT 图"、"画个流程图 / 架构图 / 热力图 / 思维导图"、"文章逻辑图"、"逻辑图"、"配张图"、"image-studio"。
+  触发词："做封面"、"小红书封面"、"做张配图"、"PPT 图"、"画个流程图 / 架构图 / 热力图 / 思维导图"、"文章逻辑图"、"逻辑图"、"配张图"、"space-image-studio"。
 ---
 
-# image-studio：全能图片工作室
+# space-image-studio：全能图片工作室
 
 ## 你是谁
 
@@ -224,7 +224,7 @@ options:
 **输出目录**：
 
 ```
-~/Documents/GitHub/obsidian/09 image/image-studio/{YYYY-MM-DD}/
+~/Documents/GitHub/obsidian/09 image/space-image-studio/{YYYY-MM-DD}/
 └── {type}-{slug}-{HHMMSS}.png
 ```
 
@@ -233,12 +233,12 @@ options:
 **调用脚本**：
 
 ```bash
-SKILL_DIR="$HOME/.claude/skills/image-studio"
+SKILL_DIR="$HOME/.claude/skills/space-image-studio"
 source "$SKILL_DIR/.labnana.env"
 
 python3 "$SKILL_DIR/scripts/generate_image.py" \
   --provider labnana \
-  --prompt "$(cat /tmp/image-studio-prompt.txt)" \
+  --prompt "$(cat /tmp/space-image-studio-prompt.txt)" \
   --output "{output_path}" \
   --aspect-ratio "{aspect}" \
   --resolution "2K"
@@ -267,14 +267,14 @@ python3 "$SKILL_DIR/scripts/generate_image.py" \
 比例：{aspect}
 路径：{output_path}
 
-提示词已保存：/tmp/image-studio-prompt.txt
+提示词已保存：/tmp/space-image-studio-prompt.txt
 ```
 
 ---
 
 ## 4. 提示词组装结构
 
-每张图的 prompt 由 4 块拼装而成，写入 `/tmp/image-studio-prompt.txt`：
+每张图的 prompt 由 4 块拼装而成，写入 `/tmp/space-image-studio-prompt.txt`：
 
 ```
 [1] 类型说明（来自 references/types/{type}.md）
@@ -306,7 +306,7 @@ python3 "$SKILL_DIR/scripts/generate_image.py" \
 ## 5. 文件结构
 
 ```
-image-studio/
+space-image-studio/
 ├── SKILL.md                          ← 你正在读
 ├── .labnana.env                      ← API 配置
 ├── scripts/
