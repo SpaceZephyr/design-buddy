@@ -1,6 +1,6 @@
 ---
 name: space-slide-deck
-description: Generates professional slide deck images from content. Creates outlines with style instructions, then generates individual slide images. Use when user asks to "create slides", "make a presentation", "generate deck", "slide deck", or "PPT".
+description: Generates professional slide deck images from content. Creates outlines with style instructions, generates individual slide images, and exports PPTX/PDF. Includes a brand design system mode using 60+ getdesign.md brand styles: auto-matches content to brand-inspired slide styles, recommends 5 matched styles plus 1 smart match, or uses an explicitly requested brand style. Use when user asks to "create slides", "make a presentation", "generate deck", "slide deck", "PPT", "design slide", "brand style PPT", or wants content turned into a designed presentation.
 ---
 
 # Slide Deck Generator
@@ -12,6 +12,8 @@ Transform content into professional slide deck images.
 ```bash
 /space-slide-deck path/to/content.md
 /space-slide-deck path/to/content.md --style sketch-notes
+/space-slide-deck path/to/content.md --brand-style auto
+/space-slide-deck path/to/content.md --brand-style claude
 /space-slide-deck path/to/content.md --audience executives
 /space-slide-deck path/to/content.md --lang zh
 /space-slide-deck path/to/content.md --slides 10
@@ -29,12 +31,14 @@ Transform content into professional slide deck images.
 |--------|---------|
 | `scripts/merge-to-pptx.ts` | Merge slides into PowerPoint |
 | `scripts/merge-to-pdf.ts` | Merge slides into PDF |
+| `scripts/recommend_brand_styles.py` | Recommend 5 matched brand styles + 1 smart match |
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
 | `--style <name>` | Visual style: preset name, `custom`, or custom style name |
+| `--brand-style <slug|auto|recommend>` | Use getdesign.md brand design systems for slide style. `auto` selects smart match; `recommend` forces the 5+1 chooser |
 | `--audience <type>` | Target: beginners, intermediate, experts, executives, general |
 | `--lang <code>` | Output language (en, zh, ja, etc.) |
 | `--slides <number>` | Target slide count (8-25 recommended, max 30) |
@@ -52,6 +56,28 @@ Transform content into professional slide deck images.
 | > 5000 words | 20-30 (consider splitting) |
 
 ## Style System
+
+### Brand Design Systems
+
+Use this mode when the user asks for a "design Slide", "brand style PPT", "参考某品牌风格", or when content would benefit from stronger product/brand art direction.
+
+- Registry: `references/brand-style-registry.json`
+- Workflow: `references/brand-design-system.md`
+- Recommender: `scripts/recommend_brand_styles.py`
+- Full brand specs: fetch live via `npx getdesign@latest add <slug>` before generating `outline.md`
+
+**Brand style behavior**:
+
+| User Situation | Action |
+| --- | --- |
+| User names a brand, e.g. "Notion 风格 PPT" | Map to slug, fetch DESIGN.md, use it directly |
+| User passes `--brand-style claude` | Fetch `claude` DESIGN.md and build deck style from it |
+| User passes `--brand-style auto` | Run recommender, use `smart_match` without asking |
+| User passes `--brand-style recommend` | Run recommender and ask user to choose from 5 matched options + `智能匹配` |
+| User gives content with no explicit style | Prefer brand recommendation flow when the request emphasizes design quality; otherwise use preset flow |
+
+**5+1 recommendation rule**:
+After content analysis, show 5 content-matched brand styles and a 6th `智能匹配` option. Each of the first 5 options must include one sentence explaining why it fits. The 6th option must name the smart-match brand it will use.
 
 ### Presets
 
@@ -232,6 +258,11 @@ Schema: `references/config/preferences-schema.md`
 4. Detect source language
 5. Determine recommended slide count
 6. Generate topic slug from content
+7. If brand style mode is active or likely useful, run:
+   ```bash
+   python3 ${SKILL_DIR}/scripts/recommend_brand_styles.py <source-file>
+   ```
+   Save the output to `brand-style-recommendations.md` and include the `smart_match` in `analysis.md`.
 
 **1.3 Check Existing Content** ⚠️ REQUIRED
 
@@ -262,6 +293,7 @@ options:
 **Save to `analysis.md`** with:
 - Topic, audience, content signals
 - Recommended style (based on Auto Style Selection)
+- Brand style recommendations when applicable
 - Recommended slide count
 - Language detection
 
@@ -275,6 +307,7 @@ options:
 - Content type + topic identified
 - Language: [from EXTEND.md or detected]
 - **Recommended style**: [preset] (based on content signals)
+- **Recommended brand style**: [smart_match slug] when brand mode is active
 - **Recommended slides**: [N] (based on content length)
 
 #### Round 1 (Always)
@@ -282,6 +315,29 @@ options:
 **Use AskUserQuestion** for all 5 questions:
 
 **Question 1: Style**
+
+If brand style mode is active, use the 5+1 brand chooser instead of the preset chooser:
+
+```
+header: "Style"
+question: "这份 PPT 想用哪套设计系统？"
+options:
+  - label: "{brand_1}"
+    description: "{one-sentence reason from recommender}"
+  - label: "{brand_2}"
+    description: "{one-sentence reason from recommender}"
+  - label: "{brand_3}"
+    description: "{one-sentence reason from recommender}"
+  - label: "{brand_4}"
+    description: "{one-sentence reason from recommender}"
+  - label: "{brand_5}"
+    description: "{one-sentence reason from recommender}"
+  - label: "智能匹配 (Recommended)"
+    description: "Use {smart_match}: {one-sentence reason}"
+```
+
+If regular preset mode is active, use:
+
 ```
 header: "Style"
 question: "Which visual style for this deck?"
@@ -424,12 +480,15 @@ Create outline using the confirmed style from Step 2.
 **Style Resolution**:
 - If preset selected → Read `references/styles/{preset}.md`
 - If custom dimensions → Read dimension files from `references/dimensions/` and combine
+- If brand style selected → Read `references/brand-design-system.md`, fetch the selected brand's DESIGN.md with `npx getdesign@latest add <slug>`, and convert it into the outline `<STYLE_INSTRUCTIONS>` block
+- If mixed brand style selected → Fetch every selected brand, use the first as primary, then merge only the explicitly requested dimensions from secondary brands
 
 **Generate**:
 1. Follow `references/outline-template.md` for structure
 2. Build STYLE_INSTRUCTIONS from style or dimensions
-3. Apply confirmed audience, language, slide count
-4. Save as `outline.md`
+3. For brand styles, include `Brand Design System` metadata and exact tokens from DESIGN.md where available
+4. Apply confirmed audience, language, slide count
+5. Save as `outline.md`
 
 **After generation**:
 - If `--outline-only`, stop here

@@ -9,6 +9,7 @@ Standard structure for slide deck outlines with style instructions.
 
 **Topic**: [topic description]
 **Style**: [preset name OR "custom"]
+**Brand Style**: [brand slug, "smart-match:<slug>", or "none"]
 **Dimensions**: [texture] + [mood] + [typography] + [density]
 **Audience**: [target audience]
 **Language**: [output language]
@@ -18,6 +19,11 @@ Standard structure for slide deck outlines with style instructions.
 ---
 
 <STYLE_INSTRUCTIONS>
+Brand Design System:
+  Primary Brand: [brand slug or none]
+  Secondary Brands: [brand slugs or none]
+  Source: [preset dimensions OR getdesign.md DESIGN.md]
+
 Design Aesthetic: [2-3 sentence description combining dimension characteristics]
 
 Background:
@@ -214,6 +220,7 @@ The `<STYLE_INSTRUCTIONS>` block is the SINGLE SOURCE OF TRUTH for style informa
 
 | Section | Content | Source |
 |---------|---------|--------|
+| Brand Design System | Brand slug, secondary brands, source | User selection + getdesign.md |
 | Design Aesthetic | Overall visual direction | Combined from all dimensions |
 | Background | Base color and texture details | texture + mood dimensions |
 | Typography | Font descriptions (visual, not names) | typography dimension |
@@ -225,6 +232,8 @@ The `<STYLE_INSTRUCTIONS>` block is the SINGLE SOURCE OF TRUTH for style informa
 **Important**:
 - Typography descriptions must describe visual appearance (e.g., "rounded sans-serif", "bold geometric") since image generators cannot use font names
 - Prompts should extract STYLE_INSTRUCTIONS from this outline, NOT re-read style files
+- When using a brand style, copy exact tokens from fetched `DESIGN.md` when available: colors, typography scale, spacing, radius, shadows, surface treatments
+- Brand-inspired decks must not include official logos or imply endorsement unless user explicitly supplies authorized assets
 
 ## Preset → Dimensions Reference
 

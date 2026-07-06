@@ -190,6 +190,10 @@ Design Buddy 内所有 Skill 都统一使用 `space-*` 命名，目录名与 `SK
 ```
 
 ```text
+把这份 Markdown 转成 PPT，并从 60+ 品牌设计系统里推荐 5 种风格
+```
+
+```text
 把这份 Markdown 转成分享海报
 ```
 
@@ -221,7 +225,7 @@ Design Buddy 内所有 Skill 都统一使用 `space-*` 命名，目录名与 `SK
 | `space-mermaid-diagram` | 文本、工作流、系统关系转 Mermaid 图 | Mermaid / Markdown |
 | `space-image-studio` | 小红书封面、PPT 配图、图表、文章逻辑图的 GPT-image-2 总控工作室 | PNG |
 | `space-ai-article-illustration` | GPT-image-2 / Gemini 文章批量配图，带中文图表提示词 | 多张 PNG + 更新后的文章 |
-| `space-slide-deck` | Markdown / 长文生成整套幻灯片图片，并可导出 PPTX / PDF | 多张 PNG + PPTX / PDF |
+| `space-slide-deck` | Markdown / 长文生成整套幻灯片图片，支持 60+ getdesign.md 品牌设计系统智能匹配，并可导出 PPTX / PDF | 多张 PNG + PPTX / PDF |
 | `space-wechat-layout` | 微信公众号文章排版，生成本地预览页和可复制富 HTML | HTML 预览页 |
 | `space-canvas-art` | 海报、静态艺术、视觉作品的设计哲学与画布生成 | PNG / PDF / MD |
 | `space-generative-art` | p5.js 生成艺术、粒子、流场、交互参数探索 | HTML / JS / MD |
@@ -239,7 +243,7 @@ Design Buddy 内所有 Skill 都统一使用 `space-*` 命名，目录名与 `SK
 | 品牌设计 | `设计 Logo`、`给这个产品做 10 个 Logo 方向` | 收集品牌信息并批量生成视觉方向 |
 | 品牌规范 UI | `用 Apple 风格做 Hero`、`Notion + Linear 混搭` | 通过 getdesign.md 拉取 DESIGN.md，按真实品牌 token 生成 UI |
 | GPT-image-2 工作室 | `用 space-image-studio 做封面`、`画一个高质感 SWOT 图片` | 调用 LabNana / GPT-image-2 生成高质量 PNG |
-| 幻灯片生成 | `把这份 Markdown 做成 PPT`、`生成 12 页 deck` | 生成大纲、逐页图片，并合并 PPTX / PDF |
+| 幻灯片生成 | `把这份 Markdown 做成 PPT`、`生成 12 页 deck`、`随机推荐 5 种匹配的品牌风格` | 生成大纲、智能选择设计系统、逐页图片，并合并 PPTX / PDF |
 | 公众号排版 | `把这篇文章排成公众号`、`生成可复制 HTML` | 生成本地预览页，复制富 HTML 到公众号编辑器 |
 | 故事分镜 | `把这个故事做成分镜`、`生成故事板` | 拆故事线、生成镜头表和连续图片 |
 | 风格控制 | `用蓝图风`、`做成手绘感`、`更极简一点` | 调整 palette、rendering、layout、style 等参数 |
